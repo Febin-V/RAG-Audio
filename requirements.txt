@@ -1,0 +1,12 @@
+flask
+flask-cors
+python-multipart
+faster-whisper
+sentence-transformers
+faiss-cpu
+pydub
+ffmpeg-python
+numpy
+python-dotenv
+tqdm
+torch 

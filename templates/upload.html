@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload Audio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 14px;
+      padding: 24px 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      max-width: 420px;
+      width: 100%;
+      border: 1px solid #1f2937;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 0.9rem;
+      margin-bottom: 18px;
+      color: #9ca3af;
+    }
+
+    .file-input-wrapper {
+      border: 1px dashed #4b5563;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    input[type="file"] {
+      margin-top: 6px;
+      width: 100%;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: #22c55e;
+      color: #022c22;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #a5b4fc;
+      min-height: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h1>Upload your audio</h1>
+    <p>Select an audio file to send it to the server for processing.</p>
+
+    <!-- form sends audio to /upload -->
+    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+      <div class="file-input-wrapper">
+        <span>Choose an audio file (mp3, wav, m4a, etc.)</span><br />
+        <input
+          type="file"
+          name="audio_file"
+          id="audio_file"
+          accept="audio/*"
+          required
+        />
+      </div>
+
+      <button type="submit" id="uploadBtn">Upload Audio</button>
+
+      <div class="status" id="statusText"></div>
+    </form>
+
+    <!-- Optional JS: small UX improvement -->
+    <script>
+      const form = document.getElementById("uploadForm");
+      const btn = document.getElementById("uploadBtn");
+      const statusText = document.getElementById("statusText");
+
+      form.addEventListener("submit", function () {
+        btn.disabled = true;
+        statusText.textContent = "Uploading your audio...";
+      });
+    </script>
+  </div>
+</body>
+</html>

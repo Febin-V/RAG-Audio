@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Audio RAG Chatbot</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.chat-container {
+  width: 430px;
+  height: 660px;
+  background: #020617;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+/* HEADER */
+.header {
+  padding: 14px;
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid #1f2937;
+}
+
+/* UPLOAD */
+.upload-section {
+  padding: 12px;
+  border-bottom: 1px solid #1f2937;
+}
+
+.upload-section input {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.upload-section button {
+  width: 100%;
+  padding: 8px;
+  background: #22c55e;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #022c22;
+}
+
+.status {
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+/* PROCESS STEPS */
+#processSteps {
+  display: none;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.completed {
+  color: #22c55e;
+  font-weight: bold;
+}
+
+/* CHAT */
+.chat-box {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  max-width: 85%;
+  font-size: 0.9rem;
+}
+
+.user {
+  background: #2563eb;
+  align-self: flex-end;
+}
+
+.bot {
+  background: #1f2937;
+  align-self: flex-start;
+}
+
+/* INPUT */
+.input-area {
+  display: flex;
+  border-top: 1px solid #1f2937;
+}
+
+.input-area input {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  outline: none;
+}
+
+.input-area button {
+  padding: 10px 14px;
+  background: #2563eb;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="chat-container">
+
+  <!-- HEADER -->
+  <div class="header">🎧 Audio RAG Chatbot</div>
+
+  <!-- UPLOAD -->
+  <div class="upload-section">
+    <input type="file" id="audioFile" accept="audio/*">
+    <button onclick="uploadAudio()">Upload Audio</button>
+
+    <div class="status" id="uploadStatus"></div>
+
+    <div id="processSteps">
+      <div id="step1">⏳ Whisper transcription</div>
+      <div id="step2">⏳ Transcript chunking</div>
+      <div id="step3">⏳ Embedding generation</div>
+      <div id="step4">⏳ Ready to chat</div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-box" id="chatBox"></div>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="Ask a question..." disabled>
+    <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+  </div>
+
+</div>
+
+<script>
+let sessionId = crypto.randomUUID();
+
+/* UTIL */
+function markCompleted(id, text) {
+  const el = document.getElementById(id);
+  el.textContent = "✔ " + text;
+  el.classList.add("completed");
+}
+
+function addMessage(text, role) {
+  const box = document.getElementById("chatBox");
+  const msg = document.createElement("div");
+  msg.className = `message ${role}`;
+  msg.innerHTML = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+/* UPLOAD AUDIO */
+async function uploadAudio() {
+  const fileInput = document.getElementById("audioFile");
+  const status = document.getElementById("uploadStatus");
+  const steps = document.getElementById("processSteps");
+
+  if (!fileInput.files.length) {
+    alert("Please select an audio file");
+    return;
+  }
+
+  status.textContent = "⏳ Processing audio...";
+  steps.style.display = "block";
+
+  const formData = new FormData();
+  formData.append("audio_file", fileInput.files[0]);
+
+  try {
+    const res = await fetch("/upload", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (data.status === "success") {
+
+      setTimeout(() => markCompleted("step1", "Whisper transcription completed"), 500);
+      setTimeout(() => markCompleted("step2", "Transcript chunking completed"), 1000);
+      setTimeout(() => markCompleted("step3", "Embedding generation completed"), 1500);
+      setTimeout(() => {
+        markCompleted("step4", "Ready to chat");
+        status.textContent = "";
+        document.getElementById("userInput").disabled = false;
+        document.getElementById("sendBtn").disabled = false;
+      }, 2000);
+
+    } else {
+      status.textContent = "❌ Upload failed";
+    }
+  } catch (err) {
+    status.textContent = "❌ Server error";
+  }
+}
+
+/* SEND CHAT MESSAGE */
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage(text, "user");
+  input.value = "";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: text,
+      session_id: sessionId
+    })
+  });
+
+  const data = await res.json();
+
+  let reply = data.answer || "No answer";
+
+  if (data.references && data.references.length > 0) {
+    const r = data.references[0];
+    reply += `<br><small>📌 ${r.start_time.toFixed(2)}s – ${r.end_time.toFixed(2)}s</small>`;
+  }
+
+  addMessage(reply, "bot");
+}
+</script>
+
+</body>
+</html>
