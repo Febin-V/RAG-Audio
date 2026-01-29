@@ -17,3 +17,20 @@ def get_query_embedding(text: str):
 
 #"all-MiniLM-L6-v2"
 #first i used model
+'''
+Audio transcripts:
+
+Are long
+
+Have noise (fillers, pauses)
+
+Require context understanding
+
+➡️ BGE’s 1024-dimensional vectors capture:
+
+Topic relationships
+
+Intent
+
+Context better than MiniLM
+'''

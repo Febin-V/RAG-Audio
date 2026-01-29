@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from streamlit import text
+
 from models.whisper_model import whisper_model
 from models.embedding_model import get_embedding
 from db.chroma_db import collection
